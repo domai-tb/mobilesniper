@@ -6,13 +6,15 @@ import (
 )
 
 type Target struct {
-	Host string
-	IP   string
-	Port int
+	Host     string
+	IP       string
+	Port     int
+	Service  string
+	Protocol string
 }
 
 func (t Target) String() string {
-	return fmt.Sprintf("%s - %s:%d", t.Host, t.IP, t.Port)
+	return fmt.Sprintf("%s - %s:%d/%s: %s", t.Host, t.IP, t.Port, t.Protocol, t.Service)
 }
 
 func PrintTargets(t *[]Target) string {

@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	maxConcurrency = 50 // Maximum number of concurrent goroutines
+	maxConcurrency = 256 // Maximum number of concurrent goroutines
 )
 
 func DiscoverOpenPorts(targetNet string, targetChan chan<- Target, wg *sync.WaitGroup) (targets *[]Target, err error) {
@@ -34,17 +34,17 @@ func DiscoverOpenPorts(targetNet string, targetChan chan<- Target, wg *sync.Wait
 			defer wg.Done()
 			defer func() { <-semaphore }() // remove from channel
 
-			cmd := exec.Command("nmap", "-T5", "-Pn", "-oX", "-", "-p-", ip)
+			cmd := exec.Command("nmap", "-T5", "-Pn", "--scan-delay", "0", "--max-scan-delay", "20ms", "-oX", "-", "-p-", "-sV", ip)
 			var out bytes.Buffer
 			cmd.Stdout = &out
 
-			log.Printf("Start scanning %s", ip)
+			// log.Printf("Start scanning %s", ip)
 			err := cmd.Run()
 			if err != nil {
 				log.Printf("error running nmap for %s: %v", ip, err)
 				return
 			}
-			log.Printf("Finish scanning %s", ip)
+			// log.Printf("Finish scanning %s", ip)
 
 			var nmapRun nmap.NmapRun
 			err = xml.Unmarshal(out.Bytes(), &nmapRun)
@@ -58,7 +58,7 @@ func DiscoverOpenPorts(targetNet string, targetChan chan<- Target, wg *sync.Wait
 					for _, port := range host.Ports {
 						if port.State.State == "open" {
 							retVal = append(retVal, Target{Host: ip, IP: ip, Port: int(port.PortId)})
-							targetChan <- Target{Host: ip, IP: ip, Port: int(port.PortId)}
+							targetChan <- Target{Host: ip, IP: ip, Port: int(port.PortId), Protocol: port.Protocol, Service: port.Service.Name}
 						}
 					}
 				}
