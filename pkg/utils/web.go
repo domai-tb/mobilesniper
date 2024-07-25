@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func IsHTTPorHTTPS(ip string, port int) string {
+func IsHTTPorHTTPS(ip string, port int) bool {
 	urlHTTP := fmt.Sprintf("http://%s:%d", ip, port)
 	urlHTTPS := fmt.Sprintf("https://%s:%d", ip, port)
 
@@ -18,7 +18,7 @@ func IsHTTPorHTTPS(ip string, port int) string {
 	resp, err := client.Get(urlHTTP)
 	if err == nil {
 		resp.Body.Close()
-		return "HTTP"
+		return true
 	}
 
 	// Check HTTPS
@@ -31,8 +31,8 @@ func IsHTTPorHTTPS(ip string, port int) string {
 	resp, err = client.Get(urlHTTPS)
 	if err == nil {
 		resp.Body.Close()
-		return "HTTPS"
+		return true
 	}
 
-	return "NO"
+	return false
 }

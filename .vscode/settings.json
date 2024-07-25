@@ -1,0 +1,28 @@
+{
+    "debug.openDebug": "openOnDebugBreak",
+    "files.autoSave": "onFocusChange",
+    "explorer.confirmDragAndDrop": false,
+    "explorer.confirmDelete": false,
+
+    "[go]": {
+        "editor.autoIndent": "full",
+        "editor.insertSpaces": true,
+        "editor.defaultFormatter": "golang.go",
+        "editor.wordWrap": "wordWrapColumn",
+        "editor.wordWrapColumn": 120,
+        "editor.suggestSelection": "first",
+        "editor.tabCompletion": "onlySnippets",
+        "editor.selectionHighlight": false,
+        "editor.wordBasedSuggestions": "off",
+        "editor.suggest.snippetsPreventQuickSuggestions": false,
+        "editor.formatOnSave": true,
+        "editor.bracketPairColorization.enabled": true,
+        "editor.guides.bracketPairs": true,
+        "editor.tabSize": 4,
+        "editor.rulers": [
+            60,
+            100
+        ],
+
+    }
+}

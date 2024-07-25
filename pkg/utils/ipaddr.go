@@ -5,7 +5,7 @@ import (
 	"net"
 )
 
-func getIPsInCIDR(cidr string) ([]string, error) {
+func GetIPsInCIDR(cidr string) ([]string, error) {
 	ip, ipNet, err := net.ParseCIDR(cidr)
 	if err != nil {
 		return nil, fmt.Errorf("invalid CIDR notation: %v", err)

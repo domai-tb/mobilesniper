@@ -1,4 +1,4 @@
-package enum
+package models
 
 import (
 	"fmt"
@@ -6,15 +6,14 @@ import (
 )
 
 type Target struct {
-	Host     string
 	IP       string
 	Port     int
-	Service  string
+	Service  Service
 	Protocol string
 }
 
 func (t Target) String() string {
-	return fmt.Sprintf("%s - %s:%d/%s: %s", t.Host, t.IP, t.Port, t.Protocol, t.Service)
+	return fmt.Sprintf("%s:%d/%s: %s", t.IP, t.Port, t.Protocol, t.Service)
 }
 
 func PrintTargets(t *[]Target) string {
