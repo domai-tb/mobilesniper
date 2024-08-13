@@ -7,6 +7,7 @@ import (
 	"log"
 	"os/exec"
 	"sync"
+	"time"
 
 	"github.com/tomsteele/go-nmap"
 
@@ -14,14 +15,14 @@ import (
 	utils "github.com/awareseven/mobilesniper/pkg/utils"
 )
 
-func DiscoverOpenPorts(targetNet string, targetChan chan<- models.Target, wg *sync.WaitGroup, maxConcurrency int,
+func DiscoverOpenPorts(targetNetOrIP string, targetChan chan<- models.Target, wg *sync.WaitGroup, maxConcurrency int,
 ) (*[]models.Target, error) {
 	retVal := make([]models.Target, 0)
 	defer wg.Done()
 
-	ips, err := utils.GetIPsInCIDR(targetNet)
+	ips, err := utils.GetIPsInCIDR(targetNetOrIP)
 	if err != nil {
-		return nil, fmt.Errorf("%s is not a network in valid CIDR-notation", targetNet)
+		return nil, fmt.Errorf("%s is not a valid target. Expect network in CIDR notation or IP address", targetNetOrIP)
 	}
 
 	semaphore := make(chan struct{}, maxConcurrency)
@@ -36,8 +37,7 @@ func DiscoverOpenPorts(targetNet string, targetChan chan<- models.Target, wg *sy
 
 			// log.Printf("Start scanning %s", ip)
 			cmd := exec.Command(
-				"nmap", "--scan-delay", "0", "--max-scan-delay", "20ms",
-				"-T5", "-Pn", "-oX", "-", "-p-", "-sV", ip,
+				"nmap", "-Pn", "-oX", "-", "-p", "-", "-sV", ip,
 			)
 			var out bytes.Buffer
 			cmd.Stdout = &out
@@ -47,7 +47,6 @@ func DiscoverOpenPorts(targetNet string, targetChan chan<- models.Target, wg *sy
 				log.Printf("error running nmap for %s: %v", ip, err)
 				return
 			}
-			log.Printf("Finish scanning %s", ip)
 
 			var nmapRun nmap.NmapRun
 			err = xml.Unmarshal(out.Bytes(), &nmapRun)
@@ -57,6 +56,13 @@ func DiscoverOpenPorts(targetNet string, targetChan chan<- models.Target, wg *sy
 			}
 
 			for _, host := range nmapRun.Hosts {
+
+				log.Printf("Finish scan for %s in %v and found %d services.",
+					ip,
+					time.Time(host.EndTime).Sub(time.Time(host.StartTime)),
+					len(host.Ports),
+				)
+
 				if len(host.Ports) > 0 {
 					for _, port := range host.Ports {
 						if port.State.State == "open" {
@@ -66,11 +72,13 @@ func DiscoverOpenPorts(targetNet string, targetChan chan<- models.Target, wg *sy
 								Service: models.Service{
 									Name: port.Service.Name, Version: port.Service.Version,
 									Product: port.Service.Product,
-								}}
+								},
+							}
 						}
 					}
 				}
 			}
+
 		}(ip)
 	}
 

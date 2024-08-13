@@ -9,7 +9,14 @@ import (
 )
 
 type OpenAPI struct {
+	Info  Info                              `yaml:"info"`
 	Paths map[string]map[string]interface{} `yaml:"paths"`
+}
+
+type Info struct {
+	Title       string `yaml:"title"`
+	Version     string `yaml:"version"`
+	Description string `yaml:"description"`
 }
 
 func ParseOpenAPIFile(filePath string) (*OpenAPI, error) {
@@ -38,6 +45,5 @@ func ValidateOpenAPIFile(filePath string) (*OpenAPI, error) {
 		return nil, fmt.Errorf("invalid OpenAPI file: %s - %v", filePath, err)
 	}
 
-	fmt.Printf("Valid OpenAPI file: %s\n", filePath)
 	return swagger, nil
 }

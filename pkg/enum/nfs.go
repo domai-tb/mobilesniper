@@ -26,7 +26,7 @@ func TestOfNetworkFunction(ip string, port int, openapi *models.OpenAPI, nfrChan
 	}
 
 	accuracy := (float64(reachableCount) / float64(totalEndpoints)) * 100
-	apiName := "Unknown API"
+	apiName := openapi.Info.Title
 
 	result := models.NetworkFunctionResult{
 		IP:              ip,
