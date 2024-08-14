@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -36,7 +35,7 @@ var servicesCmd = &cobra.Command{
 			panic(err)
 		}
 
-		bar, _ := NewProgressBar(1, fmt.Sprintf("Scanning: %s", cidrOrIP))
+		bar, _ := NewProgressBar(1, fmt.Sprintf("Discover Services: %s", cidrOrIP))
 		defer bar.Finish()
 
 		var wg sync.WaitGroup
@@ -45,7 +44,7 @@ var servicesCmd = &cobra.Command{
 		targetChan := make(chan models.Target)
 
 		wg.Add(1)
-		go enum.DiscoverOpenPorts(cidrOrIP, targetChan, &wg, maxConcurrency)
+		go enum.DiscoverOpenPorts(cidrOrIP, targetChan, &wg, maxConcurrency, "-sV")
 
 		for target := range targetChan {
 			bar.ChangeMax(bar.GetMax() + 1)
@@ -65,10 +64,11 @@ var nfsCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 
 		cidrOrIP := args[0]
-		openapiPath, _ := cmd.Flags().GetString("openapi")
 
+		openapiPath, _ := cmd.Flags().GetString("openapi")
 		files, _ := os.ReadDir(openapiPath)
-		bar, _ := NewProgressBar(0, fmt.Sprintf("Scanning: %s", cidrOrIP))
+
+		bar, _ := NewProgressBar(1, fmt.Sprintf("Discover Network Functions: %s", cidrOrIP))
 		defer bar.Finish()
 
 		var wg sync.WaitGroup
@@ -98,63 +98,42 @@ var nfsCmd = &cobra.Command{
 			}
 
 			wg.Add(1)
-			go enum.DiscoverOpenPorts(cidrOrIP, targetChan, &wg, maxConcurrency)
+			go func() {
+				defer wg.Done()
+				enum.DiscoverOpenPorts(cidrOrIP, targetChan, &wg, maxConcurrency)
+			}()
 		}
 
-		semaphore := make(chan struct{}, maxConcurrency)
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
 
-		for target := range targetChan {
-			bar.ChangeMax(bar.GetMax() + len(files))
-
-			if utils.IsHTTPorHTTPS(target.IP, target.Port) {
+			for target := range targetChan {
+				bar.ChangeMax(bar.GetMax() + len(files))
 
 				wg.Add(1)
-				semaphore <- struct{}{} // add to channel
-
-				go func() {
+				go func(t models.Target) {
 					defer wg.Done()
-					defer func() { <-semaphore }() // remove from channel
-
-					log.Printf("Start identifing NFs on %s:%d", target.IP, target.Port)
-
-					err := filepath.Walk(openapiPath, func(path string, info os.FileInfo, err error) error {
-						if err != nil {
-							return err
-						}
-
-						openapi, err := models.ValidateOpenAPIFile(path)
-						if err != nil {
-							log.Printf("Invalid OpenAPI file: %s - %v\n", path, err)
-							return nil // Continue processing other files
-						}
-
-						enum.TestOfNetworkFunction(target.IP, target.Port, openapi, nfrChan)
-
-						return nil
-					})
-
-					if err != nil {
-						log.Panicf("error walking the path %q: %v", openapiPath, err)
-					}
-
-					log.Printf("Finish identifing NFs on %s:%d", target.IP, target.Port)
-
-					go func() {
-						wg.Wait()
-						close(nfrChan)
-					}()
-				}()
-
-				for nfr := range nfrChan {
-					if nfr.Accuracy > 0 {
-						log.Println(nfr.String())
-					}
-
-					time.Sleep(100 * time.Millisecond)
-					bar.Add(1)
-				}
+					enum.DiscoverNetworkFunctions(target, openapiPath, nfrChan, &wg, maxConcurrency)
+				}(target)
 			}
+		}()
+
+		go func() {
+			wg.Wait()
+			close(targetChan)
+			close(nfrChan)
+		}()
+
+		for nfr := range nfrChan {
+			if nfr.Accuracy > 0 {
+				log.Println(nfr.String())
+			}
+
+			time.Sleep(100 * time.Millisecond)
+			bar.Add(1)
 		}
+
 	},
 }
 

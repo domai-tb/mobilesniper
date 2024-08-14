@@ -16,18 +16,17 @@ import (
 )
 
 func DiscoverOpenPorts(targetNetOrIP string, targetChan chan<- models.Target, wg *sync.WaitGroup, maxConcurrency int,
-) (*[]models.Target, error) {
-	retVal := make([]models.Target, 0)
-	defer wg.Done()
+	nmapArgs ...string) error {
 
 	ips, err := utils.GetIPsInCIDR(targetNetOrIP)
 	if err != nil {
-		return nil, fmt.Errorf("%s is not a valid target. Expect network in CIDR notation or IP address", targetNetOrIP)
+		return fmt.Errorf("%s is not a valid target. Expect network in CIDR notation or IP address", targetNetOrIP)
 	}
 
 	semaphore := make(chan struct{}, maxConcurrency)
 
 	for _, ip := range ips {
+
 		wg.Add(1)
 		semaphore <- struct{}{} // add to channel
 
@@ -35,10 +34,20 @@ func DiscoverOpenPorts(targetNetOrIP string, targetChan chan<- models.Target, wg
 			defer wg.Done()
 			defer func() { <-semaphore }() // remove from channel
 
-			// log.Printf("Start scanning %s", ip)
-			cmd := exec.Command(
-				"nmap", "-Pn", "-oX", "-", "-p", "-", "-sV", ip,
-			)
+			// default nmap options to optimize parsing, performance & accurancy
+			var nmapCmd = []string{"-Pn", "-oX", "-", "-p-", "--max-retries", "3", "-T4"}
+
+			if len(nmapArgs) != 0 {
+				nmapCmd = append(nmapCmd, nmapArgs...)
+			}
+
+			// add target ip
+			nmapCmd = append(nmapCmd, ip)
+
+			// execute nmap
+			cmd := exec.Command("nmap", nmapCmd...)
+
+			// read nmap xml output
 			var out bytes.Buffer
 			cmd.Stdout = &out
 
@@ -66,14 +75,16 @@ func DiscoverOpenPorts(targetNetOrIP string, targetChan chan<- models.Target, wg
 				if len(host.Ports) > 0 {
 					for _, port := range host.Ports {
 						if port.State.State == "open" {
-							retVal = append(retVal, models.Target{IP: ip, Port: int(port.PortId)})
-							targetChan <- models.Target{
+
+							targetModel := models.Target{
 								IP: ip, Port: int(port.PortId), Protocol: port.Protocol,
 								Service: models.Service{
 									Name: port.Service.Name, Version: port.Service.Version,
 									Product: port.Service.Product,
 								},
 							}
+
+							targetChan <- targetModel
 						}
 					}
 				}
@@ -82,10 +93,5 @@ func DiscoverOpenPorts(targetNetOrIP string, targetChan chan<- models.Target, wg
 		}(ip)
 	}
 
-	go func() {
-		wg.Wait()
-		close(targetChan)
-	}()
-
-	return &retVal, err
+	return err
 }

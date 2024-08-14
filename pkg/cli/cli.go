@@ -58,7 +58,7 @@ func NewProgressBar(count int, desc string) (*progressbar.ProgressBar, *Progress
 	// Periodically refresh the progress bar to update the elapsed time
 	go func() {
 		for {
-			time.Sleep(100 * time.Millisecond)
+			time.Sleep(25 * time.Millisecond)
 			bar.RenderBlank() // Refresh the progress bar without changing progress
 		}
 	}()
