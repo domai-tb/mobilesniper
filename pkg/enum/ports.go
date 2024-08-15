@@ -15,8 +15,7 @@ import (
 	utils "github.com/awareseven/mobilesniper/pkg/utils"
 )
 
-func DiscoverOpenPorts(targetNetOrIP string, targetChan chan<- models.Target, wg *sync.WaitGroup, maxConcurrency int,
-	nmapArgs ...string) error {
+func DiscoverOpenPorts(targetNetOrIP string, targetChan chan<- models.Target, wg *sync.WaitGroup, maxConcurrency int, verbose bool, nmapArgs ...string) error {
 
 	ips, err := utils.GetIPsInCIDR(targetNetOrIP)
 	if err != nil {
@@ -26,6 +25,10 @@ func DiscoverOpenPorts(targetNetOrIP string, targetChan chan<- models.Target, wg
 	semaphore := make(chan struct{}, maxConcurrency)
 
 	for _, ip := range ips {
+
+		if verbose {
+			log.Printf("Enumerating Ports on %s", ip)
+		}
 
 		wg.Add(1)
 		semaphore <- struct{}{} // add to channel
@@ -84,10 +87,18 @@ func DiscoverOpenPorts(targetNetOrIP string, targetChan chan<- models.Target, wg
 								},
 							}
 
+							if verbose {
+								log.Printf("Found Port %d on %s", targetModel.Port, targetModel.IP)
+							}
+
 							targetChan <- targetModel
 						}
 					}
 				}
+			}
+
+			if verbose {
+				log.Printf("Finished Ports on %s", ip)
 			}
 
 		}(ip)

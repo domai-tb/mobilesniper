@@ -44,7 +44,7 @@ var servicesCmd = &cobra.Command{
 		targetChan := make(chan models.Target)
 
 		wg.Add(1)
-		go enum.DiscoverOpenPorts(cidrOrIP, targetChan, &wg, maxConcurrency, "-sV")
+		go enum.DiscoverOpenPorts(cidrOrIP, targetChan, &wg, maxConcurrency, verbose, "-sV")
 
 		for target := range targetChan {
 			bar.ChangeMax(bar.GetMax() + 1)
@@ -100,7 +100,7 @@ var nfsCmd = &cobra.Command{
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				enum.DiscoverOpenPorts(cidrOrIP, targetChan, &wg, maxConcurrency)
+				enum.DiscoverOpenPorts(cidrOrIP, targetChan, &wg, maxConcurrency, verbose)
 			}()
 		}
 
@@ -114,15 +114,26 @@ var nfsCmd = &cobra.Command{
 				wg.Add(1)
 				go func(t models.Target) {
 					defer wg.Done()
-					enum.DiscoverNetworkFunctions(target, openapiPath, nfrChan, &wg, maxConcurrency)
+					enum.DiscoverNetworkFunctions(target, openapiPath, nfrChan, &wg, maxConcurrency, verbose)
 				}(target)
 			}
 		}()
 
 		go func() {
 			wg.Wait()
+			if verbose {
+				log.Println("All Go routines finished.")
+			}
+
 			close(targetChan)
+			if verbose {
+				log.Println("Closed target channel.")
+			}
+
 			close(nfrChan)
+			if verbose {
+				log.Println("Closed network function result channel.")
+			}
 		}()
 
 		for nfr := range nfrChan {

@@ -12,6 +12,8 @@ import (
 )
 
 var maxConcurrency int // maximum number of concurrent Go-routines
+var noColor bool       // don't use ANSI colors
+var verbose bool       // verbose mode
 
 var rootCmd = &cobra.Command{
 	Use:   "mobilesniper",
@@ -28,6 +30,30 @@ func Execute() {
 }
 
 func NewProgressBar(count int, desc string) (*progressbar.ProgressBar, *ProgressLogger) {
+
+	var theme progressbar.Theme
+	var description string
+
+	if noColor {
+		theme = progressbar.Theme{
+			Saucer:        "=",
+			SaucerHead:    ">",
+			SaucerPadding: " ",
+			BarStart:      "[",
+			BarEnd:        "]",
+		}
+		description = desc
+	} else {
+		theme = progressbar.Theme{
+			Saucer:        "[green]=[reset]",
+			SaucerHead:    "[green]>[reset]",
+			SaucerPadding: " ",
+			BarStart:      "[",
+			BarEnd:        "][green]",
+		}
+		description = fmt.Sprintf("[red]%s[green]", desc)
+	}
+
 	bar := progressbar.NewOptions(count,
 		progressbar.OptionSetWriter(ansi.NewAnsiStdout()),
 		progressbar.OptionEnableColorCodes(true),
@@ -37,18 +63,12 @@ func NewProgressBar(count int, desc string) (*progressbar.ProgressBar, *Progress
 		progressbar.OptionShowElapsedTimeOnFinish(),
 		progressbar.OptionSetRenderBlankState(true),
 		progressbar.OptionSetPredictTime(false),
-		progressbar.OptionSetDescription(fmt.Sprintf("[red]%s[green]", desc)),
+		progressbar.OptionSetDescription(description),
 		progressbar.OptionSpinnerType(21),
 		progressbar.OptionOnCompletion(func() {
 			fmt.Println()
 		}),
-		progressbar.OptionSetTheme(progressbar.Theme{
-			Saucer:        "[green]=[reset]",
-			SaucerHead:    "[green]>[reset]",
-			SaucerPadding: " ",
-			BarStart:      "[",
-			BarEnd:        "][green]",
-		}),
+		progressbar.OptionSetTheme(theme),
 	)
 
 	// Create the custom logger and set it as the default logger
@@ -71,5 +91,11 @@ func init() {
 
 	rootCmd.PersistentFlags().IntVarP(
 		&maxConcurrency, "max-goroutines", "c", 256, "Maximum number of concurrent Go-routines",
+	)
+	rootCmd.PersistentFlags().BoolVarP(
+		&noColor, "no-color", "n", false, "Don't use ANSI colors",
+	)
+	rootCmd.PersistentFlags().BoolVarP(
+		&verbose, "verbose", "v", false, "Verbose mode",
 	)
 }
