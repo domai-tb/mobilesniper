@@ -8,15 +8,29 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type OpenAPI struct {
-	Info  Info                              `yaml:"info"`
-	Paths map[string]map[string]interface{} `yaml:"paths"`
+type Parameter struct {
+	Name     string      `yaml:"name"`
+	In       string      `yaml:"in"`
+	Required bool        `yaml:"required"`
+	Type     string      `yaml:"type"`
+	Example  interface{} `yaml:"example"`
+	Default  interface{} `yaml:"default"`
+}
+
+type Operation struct {
+	Responses  map[string]interface{} `yaml:"responses"`
+	Parameters []Parameter            `yaml:"parameters"`
 }
 
 type Info struct {
 	Title       string `yaml:"title"`
 	Version     string `yaml:"version"`
 	Description string `yaml:"description"`
+}
+
+type OpenAPI struct {
+	Info  Info                            `yaml:"info"`
+	Paths map[string]map[string]Operation `yaml:"paths"`
 }
 
 func ParseOpenAPIFile(filePath string) (*OpenAPI, error) {

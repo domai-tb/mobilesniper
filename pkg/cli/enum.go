@@ -66,6 +66,7 @@ var nfsCmd = &cobra.Command{
 		cidrOrIP := args[0]
 
 		openapiPath, _ := cmd.Flags().GetString("openapi")
+		threshold, _ := cmd.Flags().GetFloat64("threshold")
 		files, _ := os.ReadDir(openapiPath)
 
 		bar, _ := NewProgressBar(1, fmt.Sprintf("Discover Network Functions: %s", cidrOrIP))
@@ -137,7 +138,12 @@ var nfsCmd = &cobra.Command{
 		}()
 
 		for nfr := range nfrChan {
-			if nfr.Accuracy > 0 {
+			// Log only network function that have a detection rate over 50%
+			// and under exactly 100%. A accurancy of 100% is most likly a false positive.
+			//
+			// E.g. a python http server was always detected as some NFs
+			//
+			if nfr.Accuracy > threshold && nfr.Accuracy < 100.00000 {
 				log.Println(nfr.String())
 			}
 
@@ -149,7 +155,12 @@ var nfsCmd = &cobra.Command{
 }
 
 func init() {
-	nfsCmd.Flags().String("openapi", "assets/5GC-APIs", "Path to 3GPP OpenAPI definitions of 5G network functions")
+	nfsCmd.Flags().String(
+		"openapi", "assets/5GC-APIs", "Path to 3GPP OpenAPI definitions of 5G network functions",
+	)
+	nfsCmd.Flags().Float64P(
+		"threshold", "t", 50.0, "The threshold of accurancy a NF should be considered as detected.",
+	)
 
 	enumCmd.AddCommand(servicesCmd)
 	enumCmd.AddCommand(nfsCmd)

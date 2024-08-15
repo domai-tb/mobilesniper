@@ -92,8 +92,8 @@ func init() {
 	rootCmd.PersistentFlags().IntVarP(
 		&maxConcurrency, "max-goroutines", "c", 256, "Maximum number of concurrent Go-routines",
 	)
-	rootCmd.PersistentFlags().BoolVarP(
-		&noColor, "no-color", "n", false, "Don't use ANSI colors",
+	rootCmd.PersistentFlags().BoolVar(
+		&noColor, "no-color", false, "Don't use ANSI colors",
 	)
 	rootCmd.PersistentFlags().BoolVarP(
 		&verbose, "verbose", "v", false, "Verbose mode",

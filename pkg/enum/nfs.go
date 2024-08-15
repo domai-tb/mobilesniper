@@ -47,10 +47,23 @@ func DiscoverNetworkFunctions(target models.Target, openapiPath string, nfrChan 
 			// Iterate over all paths defined in the OpenAPI specification
 			for path, methods := range openapi.Paths {
 				// Iterate over all HTTP methods (GET, POST, etc.) for each path
-				for method, operationInterface := range methods {
-					operation, ok := operationInterface.(map[string]interface{})
-					if !ok {
-						continue // Skip if operation cannot be asserted to the expected type
+				for method, operation := range methods {
+
+					// Replace path variables with example or default values
+					for _, param := range operation.Parameters {
+						if param.In == "path" {
+							placeholder := fmt.Sprintf("{%s}", param.Name)
+							var value string
+							if param.Example != nil {
+								value = fmt.Sprintf("%v", param.Example)
+							} else if param.Default != nil {
+								value = fmt.Sprintf("%v", param.Default)
+							} else {
+								// Provide a generic placeholder if no example or default is provided
+								value = placeholder
+							}
+							path = strings.Replace(path, placeholder, value, -1)
+						}
 					}
 
 					// Construct the request URL for the given path and method
@@ -64,25 +77,27 @@ func DiscoverNetworkFunctions(target models.Target, openapiPath string, nfrChan 
 					// Execute the request
 					resp, err := client.Do(req)
 					if err != nil {
-						log.Printf("Error executing request for %s %s: %   v", method, path, err)
+						log.Printf("Error executing request for %s %s: %v", method, path, err)
 						continue // Skip to the next method if there's an error executing the request
 					}
 					defer resp.Body.Close()
 
 					// Check if the returned status code is one of the expected codes
-					_, ok = operation["responses"].(map[string]interface{})[fmt.Sprintf("%d", resp.StatusCode)]
-
-					if ok {
+					if _, ok := operation.Responses[fmt.Sprintf("%d", resp.StatusCode)]; ok {
 						// Increment the reachable count if the response matches one of the expected status codes
-						reachableCount++
+						reachableCount += 1
 
 						if verbose {
 							log.Printf("Matched expected status code %d for %s %s", resp.StatusCode, method, path)
 						}
+					} else {
+						if verbose {
+							log.Printf("Unexpected status code %d for %s %s", resp.StatusCode, method, path)
+						}
 					}
 
 					// Increment the total expected responses count
-					totalExpectedResponses++
+					totalExpectedResponses += 1
 				}
 			}
 
