@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/awareseven/mobilesniper/pkg/models"
 )
@@ -29,8 +30,14 @@ func DiscoverNetworkFunctions(target models.Target, openapiPath string, nfrChan 
 		semaphore <- struct{}{} // add to channel
 
 		go func() {
-			defer wg.Done()
-			defer func() { <-semaphore }() // remove from channel
+			defer func() {
+				wg.Done()
+				<-semaphore // remove from channel
+
+				if verbose {
+					log.Printf("Quit %s goroutine for %s:%d", path, target.IP, target.Port)
+				}
+			}()
 
 			openapi, err := models.ValidateOpenAPIFile(path)
 			if err != nil {
@@ -42,7 +49,9 @@ func DiscoverNetworkFunctions(target models.Target, openapiPath string, nfrChan 
 
 			var reachableCount int
 			var totalExpectedResponses int
-			client := &http.Client{}
+			client := &http.Client{
+				Timeout: 30 * time.Second,
+			}
 
 			// Iterate over all paths defined in the OpenAPI specification
 			for path, methods := range openapi.Paths {
@@ -80,13 +89,11 @@ func DiscoverNetworkFunctions(target models.Target, openapiPath string, nfrChan 
 						log.Printf("Error executing request for %s %s: %v", method, path, err)
 						continue // Skip to the next method if there's an error executing the request
 					}
-					defer resp.Body.Close()
 
 					// Check if the returned status code is one of the expected codes
 					if _, ok := operation.Responses[fmt.Sprintf("%d", resp.StatusCode)]; ok {
 						// Increment the reachable count if the response matches one of the expected status codes
-						reachableCount += 1
-
+						reachableCount++
 						if verbose {
 							log.Printf("Matched expected status code %d for %s %s", resp.StatusCode, method, path)
 						}
@@ -95,6 +102,9 @@ func DiscoverNetworkFunctions(target models.Target, openapiPath string, nfrChan 
 							log.Printf("Unexpected status code %d for %s %s", resp.StatusCode, method, path)
 						}
 					}
+
+					// Explicitly close the response body here
+					resp.Body.Close()
 
 					// Increment the total expected responses count
 					totalExpectedResponses += 1

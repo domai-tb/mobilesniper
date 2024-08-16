@@ -36,15 +36,20 @@ var servicesCmd = &cobra.Command{
 		}
 
 		bar, _ := NewProgressBar(1, fmt.Sprintf("Discover Services: %s", cidrOrIP))
-		defer bar.Finish()
 
 		var wg sync.WaitGroup
-		defer wg.Wait()
-
 		targetChan := make(chan models.Target)
 
 		wg.Add(1)
 		go enum.DiscoverOpenPorts(cidrOrIP, targetChan, &wg, maxConcurrency, verbose, "-sV")
+
+		wg.Add(1)
+		go func() {
+			wg.Wait()
+			close(targetChan) // Ensure channel closure after all operations are complete
+			bar.Finish()      // Ensure progress bar finishes after all operations
+			wg.Done()
+		}()
 
 		for target := range targetChan {
 			bar.ChangeMax(bar.GetMax() + 1)
@@ -70,11 +75,8 @@ var nfsCmd = &cobra.Command{
 		files, _ := os.ReadDir(openapiPath)
 
 		bar, _ := NewProgressBar(1, fmt.Sprintf("Discover Network Functions: %s", cidrOrIP))
-		defer bar.Finish()
 
 		var wg sync.WaitGroup
-		defer wg.Wait()
-
 		targetChan := make(chan models.Target)
 		nfrChan := make(chan models.NetworkFunctionResult)
 
@@ -115,26 +117,18 @@ var nfsCmd = &cobra.Command{
 				wg.Add(1)
 				go func(t models.Target) {
 					defer wg.Done()
-					enum.DiscoverNetworkFunctions(target, openapiPath, nfrChan, &wg, maxConcurrency, verbose)
+					enum.DiscoverNetworkFunctions(t, openapiPath, nfrChan, &wg, maxConcurrency, verbose)
 				}(target)
 			}
 		}()
 
+		wg.Add(1)
 		go func() {
 			wg.Wait()
-			if verbose {
-				log.Println("All Go routines finished.")
-			}
-
-			close(targetChan)
-			if verbose {
-				log.Println("Closed target channel.")
-			}
-
-			close(nfrChan)
-			if verbose {
-				log.Println("Closed network function result channel.")
-			}
+			close(targetChan) // Close the target channel first after all port scans are complete
+			close(nfrChan)    // Close the nfr channel after all NF discovery is done
+			bar.Finish()      // Ensure progress bar finishes after all operations
+			wg.Done()
 		}()
 
 		for nfr := range nfrChan {
@@ -150,7 +144,6 @@ var nfsCmd = &cobra.Command{
 			time.Sleep(100 * time.Millisecond)
 			bar.Add(1)
 		}
-
 	},
 }
 
@@ -159,7 +152,7 @@ func init() {
 		"openapi", "assets/5GC-APIs", "Path to 3GPP OpenAPI definitions of 5G network functions",
 	)
 	nfsCmd.Flags().Float64P(
-		"threshold", "t", 50.0, "The threshold of accurancy a NF should be considered as detected.",
+		"threshold", "t", 70.0, "The threshold of accurancy a NF should be considered as detected.",
 	)
 
 	enumCmd.AddCommand(servicesCmd)

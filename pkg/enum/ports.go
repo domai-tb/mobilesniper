@@ -34,8 +34,14 @@ func DiscoverOpenPorts(targetNetOrIP string, targetChan chan<- models.Target, wg
 		semaphore <- struct{}{} // add to channel
 
 		go func(ip string) {
-			defer wg.Done()
-			defer func() { <-semaphore }() // remove from channel
+			defer func() {
+				wg.Done()
+				<-semaphore // remove from channel
+
+				if verbose {
+					log.Printf("Quit port scan goroutine for %s", ip)
+				}
+			}()
 
 			// default nmap options to optimize parsing, performance & accurancy
 			var nmapCmd = []string{"-Pn", "-oX", "-", "-p-", "--max-retries", "3", "-T4"}
@@ -56,14 +62,14 @@ func DiscoverOpenPorts(targetNetOrIP string, targetChan chan<- models.Target, wg
 
 			err := cmd.Run()
 			if err != nil {
-				log.Printf("error running nmap for %s: %v", ip, err)
+				log.Printf("Error running nmap for %s: %v", ip, err)
 				return
 			}
 
 			var nmapRun nmap.NmapRun
 			err = xml.Unmarshal(out.Bytes(), &nmapRun)
 			if err != nil {
-				log.Printf("error parsing nmap XML output for %s: %v", ip, err)
+				log.Printf("Error parsing nmap XML output for %s: %v", ip, err)
 				return
 			}
 
