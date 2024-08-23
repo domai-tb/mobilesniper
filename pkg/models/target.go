@@ -13,6 +13,9 @@ type Target struct {
 }
 
 func (t Target) String() string {
+	if t.Service.String() == "unknown" {
+		return fmt.Sprintf("%s:%d/%s", t.IP, t.Port, t.Protocol)
+	}
 	return fmt.Sprintf("%s:%d/%s: %s", t.IP, t.Port, t.Protocol, t.Service)
 }
 

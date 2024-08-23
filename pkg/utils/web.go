@@ -1,6 +1,7 @@
 package enum
 
 import (
+	"bytes"
 	"crypto/tls"
 	"fmt"
 	"net/http"
@@ -31,6 +32,24 @@ func IsHTTPorHTTPS(ip string, port int) bool {
 	resp, err = client.Get(urlHTTPS)
 	if err == nil {
 		resp.Body.Close()
+		return true
+	}
+
+	return false
+}
+
+func IsHTTPPayload(payload []byte) bool {
+	// List of common HTTP methods
+	httpMethods := []string{"GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS", "CONNECT"}
+
+	for _, method := range httpMethods {
+		if bytes.HasPrefix(payload, []byte(method+" ")) {
+			return true
+		}
+	}
+
+	// Check for HTTP/1.1 or HTTP/2.0 in response lines
+	if bytes.Contains(payload, []byte("HTTP/1.1")) || bytes.Contains(payload, []byte("HTTP/2.0")) {
 		return true
 	}
 

@@ -10,7 +10,8 @@
       "request": "launch",
       "mode": "debug",
       "program": "cmd/mobilesniper/main.go",
-      "args": ["enum", "nf", "127.0.0.1", "--no-color"]
+      "args": ["enum", "nf", "127.0.0.1", "--no-color"],
+      "cwd": "${workspaceFolder}"
     },
     {
       "name": "enum nf 127.0.0.1:8000",
@@ -18,7 +19,8 @@
       "request": "launch",
       "mode": "debug",
       "program": "cmd/mobilesniper/main.go",
-      "args": ["enum", "nf", "127.0.0.1:8000", "--no-color"]
+      "args": ["enum", "nf", "127.0.0.1:8000", "--no-color"],
+      "cwd": "${workspaceFolder}"
     },
     {
       "name": "services 127.0.0.1",
@@ -26,7 +28,17 @@
       "request": "launch",
       "mode": "debug",
       "program": "cmd/mobilesniper/main.go",
-      "args": ["enum", "services", "127.0.0.1", "--no-color"]
+      "args": ["enum", "services", "127.0.0.1", "--no-color"],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "analyze pcap oai.pcap",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "cmd/mobilesniper/main.go",
+      "args": ["analyze", "pcap", "assets/5Greplay-pcaps/oai.pcap", "--no-color"],
+      "cwd": "${workspaceFolder}"
     }
   ]
 }
