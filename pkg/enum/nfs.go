@@ -14,6 +14,7 @@ import (
 )
 
 func DiscoverNetworkFunctions(target models.Target, openapiPath string, nfrChan chan<- models.NetworkFunctionResult, wg *sync.WaitGroup, maxConcurrency int, verbose bool) error {
+	defer wg.Done()
 
 	semaphore := make(chan struct{}, maxConcurrency)
 
@@ -79,14 +80,18 @@ func DiscoverNetworkFunctions(target models.Target, openapiPath string, nfrChan 
 					url := fmt.Sprintf("http://%s:%d%s", target.IP, target.Port, path)
 					req, err := http.NewRequest(strings.ToUpper(method), url, nil)
 					if err != nil {
-						log.Printf("Error creating request for %s %s: %v", method, path, err)
+						if verbose {
+							log.Printf("Error creating request for %s %s: %v", method, path, err)
+						}
 						continue // Skip to the next method if there's an error creating the request
 					}
 
 					// Execute the request
 					resp, err := client.Do(req)
 					if err != nil {
-						log.Printf("Error executing request for %s %s: %v", method, path, err)
+						if verbose {
+							log.Printf("Error executing request for %s %s: %v", method, path, err)
+						}
 						continue // Skip to the next method if there's an error executing the request
 					}
 

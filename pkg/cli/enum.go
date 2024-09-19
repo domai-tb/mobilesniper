@@ -41,14 +41,13 @@ var servicesCmd = &cobra.Command{
 		targetChan := make(chan models.Target)
 
 		wg.Add(1)
-		go enum.DiscoverOpenPorts(cidrOrIP, targetChan, &wg, maxConcurrency, verbose, "-sV")
+		hostTimeout, _ := cmd.Flags().GetString("host-timeout")
+		go enum.DiscoverOpenPorts(cidrOrIP, targetChan, &wg, maxConcurrency, hostTimeout, verbose, "-sV")
 
-		wg.Add(1)
 		go func() {
 			wg.Wait()
 			close(targetChan) // Ensure channel closure after all operations are complete
 			bar.Finish()      // Ensure progress bar finishes after all operations
-			wg.Done()
 		}()
 
 		for target := range targetChan {
@@ -76,12 +75,13 @@ var nfsCmd = &cobra.Command{
 
 		bar, _ := NewProgressBar(1, fmt.Sprintf("Discover Network Functions: %s", cidrOrIP))
 
-		var wg sync.WaitGroup
+		var targetWg, nfrWg sync.WaitGroup
 		targetChan := make(chan models.Target)
 		nfrChan := make(chan models.NetworkFunctionResult)
 
 		mayIpAndPort := strings.Split(cidrOrIP, ":")
 		if len(mayIpAndPort) == 2 {
+
 			port, _ := strconv.Atoi(mayIpAndPort[1])
 			target := models.Target{
 				IP:       mayIpAndPort[0],
@@ -100,35 +100,28 @@ var nfsCmd = &cobra.Command{
 				panic(err)
 			}
 
-			wg.Add(1)
+			targetWg.Add(1)
+			hostTimeout, _ := cmd.Flags().GetString("host-timeout")
+			go enum.DiscoverOpenPorts(cidrOrIP, targetChan, &targetWg, maxConcurrency, hostTimeout, verbose)
+
 			go func() {
-				defer wg.Done()
-				enum.DiscoverOpenPorts(cidrOrIP, targetChan, &wg, maxConcurrency, verbose)
+				targetWg.Wait()
+				close(targetChan)
 			}()
+
 		}
 
-		wg.Add(1)
+		for target := range targetChan {
+			bar.ChangeMax(bar.GetMax() + len(files))
+
+			nfrWg.Add(1)
+			go enum.DiscoverNetworkFunctions(target, openapiPath, nfrChan, &nfrWg, maxConcurrency, verbose)
+		}
+
 		go func() {
-			defer wg.Done()
-
-			for target := range targetChan {
-				bar.ChangeMax(bar.GetMax() + len(files))
-
-				wg.Add(1)
-				go func(t models.Target) {
-					defer wg.Done()
-					enum.DiscoverNetworkFunctions(t, openapiPath, nfrChan, &wg, maxConcurrency, verbose)
-				}(target)
-			}
-		}()
-
-		wg.Add(1)
-		go func() {
-			wg.Wait()
-			close(targetChan) // Close the target channel first after all port scans are complete
-			close(nfrChan)    // Close the nfr channel after all NF discovery is done
-			bar.Finish()      // Ensure progress bar finishes after all operations
-			wg.Done()
+			nfrWg.Wait()
+			close(nfrChan) // Close the nfr channel after all NF discovery is done
+			bar.Finish()   // Ensure progress bar finishes after all operations
 		}()
 
 		for nfr := range nfrChan {
@@ -153,6 +146,10 @@ func init() {
 	)
 	nfsCmd.Flags().Float64P(
 		"threshold", "t", 70.0, "The threshold of accurancy a NF should be considered as detected.",
+	)
+
+	enumCmd.PersistentFlags().String(
+		"host-timeout", "4m", "The time before give up a scan on a single host.",
 	)
 
 	enumCmd.AddCommand(servicesCmd)

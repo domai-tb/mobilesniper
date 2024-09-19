@@ -15,7 +15,8 @@ import (
 	utils "github.com/awareseven/mobilesniper/pkg/utils"
 )
 
-func DiscoverOpenPorts(targetNetOrIP string, targetChan chan<- models.Target, wg *sync.WaitGroup, maxConcurrency int, verbose bool, nmapArgs ...string) error {
+func DiscoverOpenPorts(targetNetOrIP string, targetChan chan<- models.Target, wg *sync.WaitGroup, maxConcurrency int, hostTimeout string, verbose bool, nmapArgs ...string) error {
+	defer wg.Done()
 
 	ips, err := utils.GetIPsInCIDR(targetNetOrIP)
 	if err != nil {
@@ -27,16 +28,16 @@ func DiscoverOpenPorts(targetNetOrIP string, targetChan chan<- models.Target, wg
 	for _, ip := range ips {
 
 		if verbose {
-			log.Printf("Enumerating Ports on %s", ip)
+			log.Printf("Enumerating Ports on %s\n", ip)
 		}
 
 		wg.Add(1)
 		semaphore <- struct{}{} // add to channel
 
-		go func(ip string) {
+		go func() {
 			defer func() {
 				wg.Done()
-				<-semaphore // remove from channel
+				<-semaphore
 
 				if verbose {
 					log.Printf("Quit port scan goroutine for %s", ip)
@@ -44,7 +45,7 @@ func DiscoverOpenPorts(targetNetOrIP string, targetChan chan<- models.Target, wg
 			}()
 
 			// default nmap options to optimize parsing, performance & accurancy
-			var nmapCmd = []string{"-Pn", "-oX", "-", "-p-", "--max-retries", "3", "-T4"}
+			var nmapCmd = []string{"-Pn", "-oX", "-", "-p-", "--host-timeout", hostTimeout, "--max-retries", "3", "-T5"}
 
 			if len(nmapArgs) != 0 {
 				nmapCmd = append(nmapCmd, nmapArgs...)
@@ -74,14 +75,15 @@ func DiscoverOpenPorts(targetNetOrIP string, targetChan chan<- models.Target, wg
 			}
 
 			for _, host := range nmapRun.Hosts {
-
-				log.Printf("Finish scan for %s in %v and found %d services.",
-					ip,
-					time.Time(host.EndTime).Sub(time.Time(host.StartTime)),
-					len(host.Ports),
-				)
-
+				// only hosts with open ports are interesting
 				if len(host.Ports) > 0 {
+
+					log.Printf("Finish scan for %s in %v and found %d services.",
+						ip,
+						time.Time(host.EndTime).Sub(time.Time(host.StartTime)),
+						len(host.Ports),
+					)
+
 					for _, port := range host.Ports {
 						if port.State.State == "open" {
 
@@ -106,8 +108,7 @@ func DiscoverOpenPorts(targetNetOrIP string, targetChan chan<- models.Target, wg
 			if verbose {
 				log.Printf("Finished Ports on %s", ip)
 			}
-
-		}(ip)
+		}()
 	}
 
 	return err
