@@ -89,6 +89,7 @@ func NewProgressBar(count int, desc string) (*progressbar.ProgressBar, *Progress
 func init() {
 	rootCmd.AddCommand(enumCmd)
 	rootCmd.AddCommand(analyzeCmd)
+	rootCmd.AddCommand(scanCmd)
 
 	rootCmd.PersistentFlags().IntVarP(
 		&maxConcurrency, "max-goroutines", "c", 128, "Maximum number of concurrent Go-routines",

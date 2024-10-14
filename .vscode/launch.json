@@ -39,6 +39,15 @@
       "program": "cmd/mobilesniper/main.go",
       "args": ["analyze", "pcap", "assets/5Greplay-pcaps/oai.pcap", "--no-color"],
       "cwd": "${workspaceFolder}"
-    }
+    },
+    {
+      "name": "scan nuclei 127.0.0.1",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "cmd/mobilesniper/main.go",
+      "args": ["scan", "nuclei", "127.0.0.1", "--no-color"],
+      "cwd": "${workspaceFolder}"
+    },
   ]
 }
