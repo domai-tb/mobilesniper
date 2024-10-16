@@ -1,0 +1,53 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "enum nf 127.0.0.1",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "cmd/mobilesniper/main.go",
+      "args": ["enum", "nf", "127.0.0.1", "--no-color"],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "enum nf 127.0.0.1:8000",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "cmd/mobilesniper/main.go",
+      "args": ["enum", "nf", "127.0.0.1:8000", "--no-color"],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "services 127.0.0.1",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "cmd/mobilesniper/main.go",
+      "args": ["enum", "services", "127.0.0.1", "--no-color"],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "analyze pcap oai.pcap",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "cmd/mobilesniper/main.go",
+      "args": ["analyze", "pcap", "assets/5Greplay-pcaps/oai.pcap", "--no-color"],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "scan nuclei 127.0.0.1",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "cmd/mobilesniper/main.go",
+      "args": ["scan", "nuclei", "127.0.0.1", "--no-color"],
+      "cwd": "${workspaceFolder}"
+    },
+  ]
+}
