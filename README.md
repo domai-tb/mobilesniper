@@ -13,6 +13,10 @@ By combining academic research and practical tools, the project provides a valua
 
 The identified threats can be integrated into MITRE ATT&CK Workbench via the following [repository](https://github.com/awareseven/pentest5g)
 
+---
+![](./docs/img/mobilesniper.gif)
+---
+
 ## Requirements
 
 These tools must be installed before succesfully running all MobileSniper commands:
