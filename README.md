@@ -17,10 +17,6 @@ The identified threats can be integrated into MITRE ATT&CK Workbench via the fol
 ![](./docs/img/mobilesniper.gif)
 ---
 
----
-![](./docs/img/mobilesniper.gif)
----
-
 ## Requirements
 
 These tools must be installed before succesfully running all MobileSniper commands:
