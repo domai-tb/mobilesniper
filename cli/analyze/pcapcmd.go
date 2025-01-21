@@ -1,4 +1,4 @@
-package cli
+package analyze
 
 import (
 	"fmt"
@@ -8,14 +8,9 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/awareseven/mobilesniper/cli/core"
 	"github.com/awareseven/mobilesniper/pkg/analyze"
 )
-
-var analyzeCmd = &cobra.Command{
-	Use:   "analyze",
-	Short: "Analyzing commands",
-	Long:  `This command group contains commands related to offline analyzing.`,
-}
 
 var pcapCmd = &cobra.Command{
 	Use:   "pcap",
@@ -27,7 +22,7 @@ var pcapCmd = &cobra.Command{
 		pcapFile := args[0]
 		openapiPath, _ := cmd.Flags().GetString("openapi")
 
-		bar, _ := NewProgressBar(1, fmt.Sprintf("Analyzing: %s", pcapFile))
+		bar, _ := core.NewProgressBar(1, fmt.Sprintf("Analyzing: %s", pcapFile))
 		defer bar.Finish()
 
 		if _, err := os.Stat(pcapFile); os.IsNotExist(err) {
@@ -35,7 +30,7 @@ var pcapCmd = &cobra.Command{
 			return
 		}
 
-		nfr, err := analyze.AnalyzePcap(pcapFile, openapiPath, verbose)
+		nfr, err := analyze.AnalyzePcap(pcapFile, openapiPath, core.Verbose)
 		if err != nil {
 			log.Println(err)
 		}
@@ -53,12 +48,4 @@ var pcapCmd = &cobra.Command{
 			bar.Add(1)
 		}
 	},
-}
-
-func init() {
-	analyzeCmd.PersistentFlags().String(
-		"openapi", "assets/5GC-APIs", "Path to 3GPP OpenAPI definitions of 5G network functions",
-	)
-
-	analyzeCmd.AddCommand(pcapCmd)
 }

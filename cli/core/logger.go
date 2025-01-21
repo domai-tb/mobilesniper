@@ -1,32 +1,47 @@
-package cli
+package core
 
 import (
 	"fmt"
 	"log"
-	"os"
+	"strings"
+	"sync"
 	"time"
 
 	"github.com/k0kubun/go-ansi"
 	"github.com/schollz/progressbar/v3"
-	"github.com/spf13/cobra"
 )
 
-var maxConcurrency int // maximum number of concurrent Go-routines
-var noColor bool       // don't use ANSI colors
-var verbose bool       // verbose mode
-
-var rootCmd = &cobra.Command{
-	Use:   "mobilesniper",
-	Short: "A pentesting tool for 5G mobile networks.",
-	Long:  "MobileSniper is a CLI application for performing various pentesting tasks specialicied on 5G mobile networks.",
+type ProgressLogger struct {
+	bar  *progressbar.ProgressBar
+	lock sync.Mutex
 }
 
-func Execute() {
-
-	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+func NewProgressLogger(bar *progressbar.ProgressBar) *ProgressLogger {
+	return &ProgressLogger{
+		bar: bar,
 	}
+}
+
+func (pl *ProgressLogger) Write(p []byte) (n int, err error) {
+	pl.lock.Lock()
+	defer pl.lock.Unlock()
+
+	// Split the log message into lines
+	lines := strings.Split(string(p), "\n")
+	for _, line := range lines {
+		if len(line) > 0 {
+			// Clear the current progress bar from the terminal
+			pl.bar.Clear()
+
+			// Print the log message line
+			fmt.Println(line)
+
+			// Re-render the progress bar after each line
+			pl.bar.RenderBlank()
+		}
+	}
+
+	return len(p), nil
 }
 
 func NewProgressBar(count int, desc string) (*progressbar.ProgressBar, *ProgressLogger) {
@@ -34,7 +49,7 @@ func NewProgressBar(count int, desc string) (*progressbar.ProgressBar, *Progress
 	var theme progressbar.Theme
 	var description string
 
-	if noColor {
+	if NoColor {
 		theme = progressbar.Theme{
 			Saucer:        "=",
 			SaucerHead:    ">",
@@ -84,20 +99,4 @@ func NewProgressBar(count int, desc string) (*progressbar.ProgressBar, *Progress
 	}()
 
 	return bar, progressLogger
-}
-
-func init() {
-	rootCmd.AddCommand(enumCmd)
-	rootCmd.AddCommand(analyzeCmd)
-	rootCmd.AddCommand(scanCmd)
-
-	rootCmd.PersistentFlags().IntVarP(
-		&maxConcurrency, "max-goroutines", "c", 128, "Maximum number of concurrent Go-routines",
-	)
-	rootCmd.PersistentFlags().BoolVar(
-		&noColor, "no-color", false, "Don't use ANSI colors",
-	)
-	rootCmd.PersistentFlags().BoolVarP(
-		&verbose, "verbose", "v", false, "Verbose mode",
-	)
 }
