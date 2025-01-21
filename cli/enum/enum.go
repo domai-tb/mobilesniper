@@ -24,4 +24,5 @@ func init() {
 
 	EnumCmd.AddCommand(servicesCmd)
 	EnumCmd.AddCommand(nfsCmd)
+	EnumCmd.AddCommand(sdcCmd)
 }

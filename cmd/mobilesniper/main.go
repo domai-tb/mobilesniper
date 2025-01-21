@@ -18,14 +18,6 @@ var rootCmd = &cobra.Command{
 	Long:  "MobileSniper is a CLI application for performing various pentesting tasks specialicied on 5G mobile networks.",
 }
 
-func Execute() {
-
-	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-}
-
 func init() {
 	rootCmd.AddCommand(enum.EnumCmd)
 	rootCmd.AddCommand(analyze.AnalyzeCmd)
@@ -40,4 +32,11 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(
 		&core.Verbose, "verbose", "v", false, "Verbose mode",
 	)
+}
+
+func main() {
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 }
