@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-type ProbeMatchMsg struct {
+type ProbeMatch struct {
 	XMLName          xml.Name
 	ProbeMatchHeader ProbeMatchHeader `xml:"Header"`
 	ProbeMatchBody   ProbeMatchBody   `xml:"Body"`
@@ -34,58 +34,53 @@ type WsdProbeMatches struct {
 
 type WsdProbeMatch struct {
 	XMLName              xml.Name
-	WsdEndpointReference WsdEndpointReference `xml:"EndpointReference"`
+	WsaEndpointReference WsaEndpointReference `xml:"EndpointReference"`
 	WsdTypes             string               `xml:"Types"`
 	WsdScopes            string               `xml:"Scopes"`
 	WsdXAddrs            string               `xml:"XAddrs"`
 	WsdMetadataVersion   string               `xml:"MetadataVersion"`
 }
 
-type WsdEndpointReference struct {
-	XMLName    xml.Name
-	WsaAddress string `xml:"Address"`
-}
-
 // Getter of ProbeMatchs Header
 
-func (p *ProbeMatchMsg) GetAction() string {
+func (p *ProbeMatch) GetAction() string {
 	return p.ProbeMatchHeader.WsaAction
 }
 
-func (p *ProbeMatchMsg) GetTo() string {
+func (p *ProbeMatch) GetTo() string {
 	return p.ProbeMatchHeader.WsaTo
 }
 
-func (p *ProbeMatchMsg) GetRelatesTo() string {
+func (p *ProbeMatch) GetRelatesTo() string {
 	return p.ProbeMatchHeader.WsaRelatesTo
 }
 
-func (p *ProbeMatchMsg) GetMessageId() string {
+func (p *ProbeMatch) GetMessageId() string {
 	return p.ProbeMatchHeader.WsaMessageId
 }
 
-func (p *ProbeMatchMsg) GetAppSequence() string {
+func (p *ProbeMatch) GetAppSequence() string {
 	return fmt.Sprintf("%s (InstanceId=%s MessageNumber=%s)", p.ProbeMatchHeader.WsdAppSequence, p.ProbeMatchHeader.WsdInstanceId, p.ProbeMatchHeader.WsdMessageNumber)
 }
 
 // Getter of ProbeMatchs Body
 
-func (p *ProbeMatchMsg) GetXAddrs() string {
+func (p *ProbeMatch) GetXAddrs() string {
 	return p.ProbeMatchBody.WsdProbeMatches.WsdProbeMatch.WsdXAddrs
 }
 
-func (p *ProbeMatchMsg) GetTypes() string {
+func (p *ProbeMatch) GetTypes() string {
 	return p.ProbeMatchBody.WsdProbeMatches.WsdProbeMatch.WsdTypes
 }
 
-func (p *ProbeMatchMsg) GetScopes() string {
+func (p *ProbeMatch) GetScopes() string {
 	return p.ProbeMatchBody.WsdProbeMatches.WsdProbeMatch.WsdScopes
 }
 
-func (p *ProbeMatchMsg) GetMetadataVersion() string {
+func (p *ProbeMatch) GetMetadataVersion() string {
 	return p.ProbeMatchBody.WsdProbeMatches.WsdProbeMatch.WsdMetadataVersion
 }
 
-func (p *ProbeMatchMsg) GetEndpointReferenceAddress() string {
-	return p.ProbeMatchBody.WsdProbeMatches.WsdProbeMatch.WsdEndpointReference.WsaAddress
+func (p *ProbeMatch) GetEndpointReferenceAddress() string {
+	return p.ProbeMatchBody.WsdProbeMatches.WsdProbeMatch.WsaEndpointReference.WsaAddress
 }

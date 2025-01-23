@@ -4,6 +4,7 @@ import (
 	"encoding/xml"
 	"log"
 	"net"
+	"sync"
 	"time"
 
 	"golang.org/x/net/ipv4"
@@ -12,7 +13,8 @@ import (
 	"github.com/awareseven/mobilesniper/pkg/utils"
 )
 
-func DiscoverSDCDevices(interfaceName string, verbose bool) error {
+func DiscoverSDCDevices(interfaceName string, sdcChan chan<- models.ProbeMatch, wg *sync.WaitGroup, verbose bool) error {
+	defer wg.Done()
 
 	// Get source interface either by given name or
 	// the first none-loopback device.
@@ -106,10 +108,13 @@ func DiscoverSDCDevices(interfaceName string, verbose bool) error {
 	utils.LogVerbosef(verbose, "Received %d bytes Anwser:\n%v", n, string(buffer))
 
 	// Reading SOAP response from UDP response
-	res := &models.ProbeMatchMsg{}
+	res := &models.ProbeMatch{}
 	err = xml.Unmarshal(buffer, res)
 
-	log.Printf("Found SDC endpoint: %s", res.GetXAddrs())
+	if err == nil {
+		sdcChan <- *res
+		log.Printf("Found SDC endpoint: %s", res.GetXAddrs())
+	}
 
 	return err
 }
