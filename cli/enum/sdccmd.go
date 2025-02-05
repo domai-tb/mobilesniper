@@ -25,6 +25,7 @@ var sdcCmd = &cobra.Command{
 
 		ifi := args[0]
 		bar, _ := core.NewProgressBar(1, fmt.Sprintf("Discover SDC Devices: %s", ifi))
+		defer bar.Finish()
 
 		var wg sync.WaitGroup
 		sdcChan := make(chan soap.ProbeMatch)
@@ -38,6 +39,7 @@ var sdcCmd = &cobra.Command{
 		}()
 
 		for probeMatch := range sdcChan {
+			bar.ChangeMax(bar.GetMax() + 1)
 
 			soapGetMsg := soap.NewSOAPMessage(
 				"http://schemas.xmlsoap.org/ws/2004/09/transfer/Get",
@@ -47,18 +49,21 @@ var sdcCmd = &cobra.Command{
 			// Marshal the Probe message to XML
 			xmlBytes, err := soapGetMsg.XMLMarshal()
 			if err != nil {
-				log.Fatalln(err)
+				log.Println(err)
+				continue
 			}
 
 			_, bodyBytes, err := utils.DoSdcXClientSOAPPost(probeMatch.GetXAddrs(), xmlBytes, core.Verbose)
 			if err != nil {
-				log.Fatalln(err)
+				log.Println(err)
+				continue
 			}
 
 			getResp := &soap.GetResponse{}
 			err = xml.Unmarshal(bodyBytes, getResp)
 			if err != nil {
-				log.Fatalln(err)
+				log.Println(err)
+				continue
 			}
 
 			device := models.CreateSDCDevicebyGetResponse(*getResp)
@@ -67,7 +72,5 @@ var sdcCmd = &cobra.Command{
 			time.Sleep(100 * time.Millisecond)
 			bar.Add(1)
 		}
-
-		bar.Finish() // Ensure progress bar finishes after all operations
 	},
 }

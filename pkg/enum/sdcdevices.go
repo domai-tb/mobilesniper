@@ -100,20 +100,27 @@ func DiscoverSDCDevices(interfaceName string, sdcChan chan<- models.ProbeMatch, 
 	}
 
 	// Read UDP multicast response
-	buffer := make([]byte, 8192)
-	n, _, _, err := udpConn.ReadFrom(buffer)
-	if err != nil {
-		log.Fatal(err)
-	}
-	utils.LogVerbosef(verbose, "Received %d bytes Anwser:\n%v", n, string(buffer))
+	for {
+		buffer := make([]byte, 8192)
+		n, _, _, err := udpConn.ReadFrom(buffer)
+		if err != nil {
+			if e, ok := err.(net.Error); ok && e.Timeout() {
+				// No UDP responses to read will result into an i/o timeout
+				err = nil
+				break
+			}
+			log.Fatal(err)
+		}
+		utils.LogVerbosef(verbose, "Received %d bytes Anwser:\n%v", n, string(buffer))
 
-	// Reading SOAP response from UDP response
-	res := &models.ProbeMatch{}
-	err = xml.Unmarshal(buffer, res)
+		// Reading SOAP response from UDP response
+		res := &models.ProbeMatch{}
+		err = xml.Unmarshal(buffer, res)
 
-	if err == nil {
-		sdcChan <- *res
-		log.Printf("Found SDC endpoint: %s", res.GetXAddrs())
+		if err == nil {
+			sdcChan <- *res
+			log.Printf("Found SDC endpoint: %s", res.GetXAddrs())
+		}
 	}
 
 	return err

@@ -24,5 +24,6 @@ go.work.sum
 # Binary builds
 build/
 
-# Propeterian sdcX SOAP messages
+# Propeterian sdcX
 assets/sdcX-XML
+assets/sdcX-Bin
