@@ -2,7 +2,25 @@
 
 This is the changelog of MobileSniper.
 
+## MobileSniper v0.2
+
+### New Features
+
+- Command **`enum sdc`:** Enumerates the connected network by sending a UDP multicast to discovery SDC providers. A provider will receive the probe message send by MobileSniper and will return a probe match message. This message contains usually sensitive information about the connected device. If the provider enforce TLS, there is no method implemented to bypass these restriction.
+
+### Refactoring
+
+- Added directory `cli` as top-level package to provide all CLI specific commands / libaries in a specific directory. All CLI packages are wrappers arround MobileSnipers packages stored in `pkg`. The command `cmd/mobilesniper/main.go` brings them into a single executable. 
+
+### Miscellaneous
+
+- Added GNU Makefiles to allow UDP multicast inside a QubesOS AppVM: `scripts/networking.mk`
+- Added GNU Makefiles to patch sdcX demo-binaries to search for shared libaries in the current working directoy: `scripts/patchsdcxbin.mk`. The proprietary sdcX binaries are not included inside of this repository. Contact "SurgiTAIX AG" for more information.
+- Ignore proprietary binaries and XML dump of SOAP messages within git.
+
 ## Initial Release - v0.1 
+
+### Initial Features
 
 - **`enum services`:** Enumerates ports on a given network or IP to identify potential 5G networking functions. This command scans open ports to detect services that could be linked to specific 5G functions.
   
