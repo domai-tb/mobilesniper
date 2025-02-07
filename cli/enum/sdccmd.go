@@ -41,31 +41,38 @@ var sdcCmd = &cobra.Command{
 		for probeMatch := range sdcChan {
 			bar.ChangeMax(bar.GetMax() + 1)
 
+			// call HTTP server with a "Get" message that should return device information
 			soapGetMsg := soap.NewSOAPMessage(
 				"http://schemas.xmlsoap.org/ws/2004/09/transfer/Get",
 				probeMatch.GetXAddrs(),
 				soap.NewGetSOAPBody(),
 			)
+
 			// Marshal the Probe message to XML
 			xmlBytes, err := soapGetMsg.XMLMarshal()
 			if err != nil {
 				log.Println(err)
-				continue
+				continue // continue with next received probe match
 			}
 
+			// actually perform the HTTP request with given porbe match address
 			_, bodyBytes, err := utils.DoSdcXClientSOAPPost(probeMatch.GetXAddrs(), xmlBytes, core.Verbose)
 			if err != nil {
-				log.Println(err)
-				continue
+				log.Println(err) // on mTLS enforced devices, this will return a mTLS mismatch error
+				continue         // continue with next received probe match
 			}
 
+			// try to parse the returned SOAP message
 			getResp := &soap.GetResponse{}
 			err = xml.Unmarshal(bodyBytes, getResp)
 			if err != nil {
 				log.Println(err)
-				continue
+				continue // continue with next received probe match
 			}
 
+			// TODO: SDC communication to perform (more) malicious actions
+			// -> successfully connection indicates that the device doesn't enfore mTLS
+			// -> without mTLS there is no other authentication method (as soon as we know)
 			device := models.CreateSDCDevicebyGetResponse(*getResp)
 			log.Printf("Endpoint states it is %s", device.String())
 

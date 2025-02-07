@@ -16,6 +16,9 @@ import (
 func DiscoverSDCDevices(interfaceName string, sdcChan chan<- models.ProbeMatch, wg *sync.WaitGroup, verbose bool) error {
 	defer wg.Done()
 
+	var srcInterface *net.Interface
+	var srcIP *net.IPNet
+
 	// Get source interface either by given name or
 	// the first none-loopback device.
 
@@ -25,8 +28,7 @@ func DiscoverSDCDevices(interfaceName string, sdcChan chan<- models.ProbeMatch, 
 	}
 	utils.LogVerbosef(verbose, "Network interfaces: %v", interfaces)
 
-	var srcInterface *net.Interface
-	var srcIP *net.IPNet
+	// iterate over available network interfaces to match the given interface argument
 	for _, i := range interfaces {
 		addrs, err := i.Addrs()
 		if err != nil {
@@ -92,26 +94,27 @@ func DiscoverSDCDevices(interfaceName string, sdcChan chan<- models.ProbeMatch, 
 	if err != nil {
 		log.Fatalln(err)
 	}
-	log.Printf("Send Probe to %s", discoveryAddr)
+	log.Printf("Send Probe on %s", discoveryAddr)
 
-	// Set deadline for connection at one second
+	// Set deadline for connection to five second
 	if err := udpConn.SetReadDeadline(time.Now().Add(time.Second * 5)); err != nil {
 		log.Fatal(err)
 	}
 
-	// Read UDP multicast response
+	// Read UDP multicast response as long as there is a communication channel open
 	for {
+		// a buffer of 8Mb should be large enought to store probe matches
 		buffer := make([]byte, 8192)
-		n, _, _, err := udpConn.ReadFrom(buffer)
+		msgLength, _, _, err := udpConn.ReadFrom(buffer) // ignore IMCP control message and source address
 		if err != nil {
 			if e, ok := err.(net.Error); ok && e.Timeout() {
 				// No UDP responses to read will result into an i/o timeout
-				err = nil
+				err = nil // this isn't a error, it just indicates that all responses are already read
 				break
 			}
 			log.Fatal(err)
 		}
-		utils.LogVerbosef(verbose, "Received %d bytes Anwser:\n%v", n, string(buffer))
+		utils.LogVerbosef(verbose, "Received %d bytes Anwser:\n%v", msgLength, string(buffer))
 
 		// Reading SOAP response from UDP response
 		res := &models.ProbeMatch{}
@@ -119,6 +122,7 @@ func DiscoverSDCDevices(interfaceName string, sdcChan chan<- models.ProbeMatch, 
 
 		if err == nil {
 			sdcChan <- *res
+			// this is the HTTP server that expects SDC SOAP messages
 			log.Printf("Found SDC endpoint: %s", res.GetXAddrs())
 		}
 	}

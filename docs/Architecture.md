@@ -10,6 +10,7 @@ graph TD
     A --> B2[analyze]
     A --> B3[scan]
     
+    B1 --> C3[sdc]
     B1 --> C1[services] --> X1{mmap}
     B1 --> C2[nf]
 
