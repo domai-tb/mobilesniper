@@ -44,11 +44,16 @@ func (d *SDCDevice) String() string {
 }
 
 // Create a SDCDevice from SOAP Get-request
-func CreateSDCDevicebyGetResponse(getResp models.GetResponse) SDCDevice {
+func CreateSDCDevicebyGetResponse(soap models.ReceiveSOAPMessage) (SDCDevice, error) {
 
 	retVal := SDCDevice{}
 
-	for _, sec := range getResp.GetResponseBody.MexMetadata.MexMetadataSections {
+	getBody, ok := soap.SOAPBody.Payload.(models.GetResponseBody)
+	if !ok {
+		return retVal, fmt.Errorf("`soap` is not a 'Get' response message")
+	}
+
+	for _, sec := range getBody.GetMexMetadataSections() {
 		if sec.DpwsThisDevice.DpwsFriendlyName != "" {
 			// Metadata section contains device information
 			retVal.Name = sec.DpwsThisDevice.DpwsFriendlyName
@@ -71,7 +76,7 @@ func CreateSDCDevicebyGetResponse(getResp models.GetResponse) SDCDevice {
 		}
 	}
 
-	return retVal
+	return retVal, nil
 }
 
 // Parse string to detect SDC device type.

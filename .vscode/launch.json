@@ -10,16 +10,26 @@
       "request": "launch",
       "mode": "debug",
       "program": "cmd/mobilesniper/main.go",
-      "args": ["enum", "sdc", "eth0", "--no-color"],
+      "args": [
+        "enum",
+        "sdc",
+        "eth0",
+        "--no-color"
+      ],
       "cwd": "${workspaceFolder}"
-    },    
+    },
     {
       "name": "enum nf 127.0.0.1",
       "type": "go",
       "request": "launch",
       "mode": "debug",
       "program": "cmd/mobilesniper/main.go",
-      "args": ["enum", "nf", "127.0.0.1", "--no-color"],
+      "args": [
+        "enum",
+        "nf",
+        "127.0.0.1",
+        "--no-color"
+      ],
       "cwd": "${workspaceFolder}"
     },
     {
@@ -28,7 +38,12 @@
       "request": "launch",
       "mode": "debug",
       "program": "cmd/mobilesniper/main.go",
-      "args": ["enum", "nf", "127.0.0.1:8000", "--no-color"],
+      "args": [
+        "enum",
+        "nf",
+        "127.0.0.1:8000",
+        "--no-color"
+      ],
       "cwd": "${workspaceFolder}"
     },
     {
@@ -37,7 +52,12 @@
       "request": "launch",
       "mode": "debug",
       "program": "cmd/mobilesniper/main.go",
-      "args": ["enum", "services", "127.0.0.1", "--no-color"],
+      "args": [
+        "enum",
+        "services",
+        "127.0.0.1",
+        "--no-color"
+      ],
       "cwd": "${workspaceFolder}"
     },
     {
@@ -46,7 +66,12 @@
       "request": "launch",
       "mode": "debug",
       "program": "cmd/mobilesniper/main.go",
-      "args": ["analyze", "pcap", "assets/5Greplay-pcaps/oai.pcap", "--no-color"],
+      "args": [
+        "analyze",
+        "pcap",
+        "assets/5Greplay-pcaps/oai.pcap",
+        "--no-color"
+      ],
       "cwd": "${workspaceFolder}"
     },
     {
@@ -55,8 +80,47 @@
       "request": "launch",
       "mode": "debug",
       "program": "cmd/mobilesniper/main.go",
-      "args": ["scan", "nuclei", "127.0.0.1", "--no-color"],
+      "args": [
+        "scan",
+        "nuclei",
+        "127.0.0.1",
+        "--no-color"
+      ],
       "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "enum sdc provider eth0",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "cmd/mobilesniper/main.go",
+      "args": [
+        "enum",
+        "sdc",
+        "provider",
+        "eth0",
+        "--no-color"
+      ],
+    },
+    {
+      "name": "enum sdc consumer eth0",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "cmd/mobilesniper/main.go",
+      "args": [
+        "enum",
+        "sdc",
+        "consumer",
+        "eth0",
+        "--tlsCA",
+        "assets/sdcX-Bin/certificates/pat_ca.pem",
+        "--tlsCrt",
+        "assets/sdcX-Bin/certificates/pat_cert.pem",
+        "--tlsKey",
+        "assets/sdcX-Bin/certificates/pat_private.pem",
+        "--no-color"
+      ],
     },
   ]
 }
