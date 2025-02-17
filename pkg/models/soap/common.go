@@ -107,7 +107,7 @@ type ReceiveWsdAppSequence struct {
 }
 
 type RecevingSOAPBodyTypes interface {
-	ProbeMatchBody | GetResponseBody
+	ProbeBody | ProbeMatchBody | GetResponseBody
 }
 
 func XMLUnmarshal[T RecevingSOAPBodyTypes](data []byte) (ReceiveSOAPMessage, error) {

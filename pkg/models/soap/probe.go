@@ -34,6 +34,16 @@ func NewProbeSOAPBody() SendSOAPBody {
 }
 
 //
+//	Probe
+//
+
+type ProbeBody struct {
+	XMLName   xml.Name `xml:"Probe"`
+	WsdType   string   `xml:"Types"`
+	WsdScopes string   `xml:"Scopes"`
+}
+
+//
 //	Probe Match
 //
 

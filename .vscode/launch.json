@@ -101,6 +101,7 @@
         "eth0",
         "--no-color"
       ],
+      "cwd": "${workspaceFolder}"
     },
     {
       "name": "enum sdc consumer eth0",
@@ -119,8 +120,10 @@
         "assets/sdcX-Bin/certificates/pat_cert.pem",
         "--tlsKey",
         "assets/sdcX-Bin/certificates/pat_private.pem",
-        "--no-color"
+        "--no-color",
+        "--verbose"
       ],
+      "cwd": "${workspaceFolder}"
     },
   ]
 }

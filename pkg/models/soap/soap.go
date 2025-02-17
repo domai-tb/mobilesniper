@@ -45,10 +45,13 @@ func NewHelloSOAPHeader() SendSOAPHeader {
 
 func NewHelloSOAPBody(ipAddr *net.TCPAddr) SendSOAPBody {
 	var helloPayload struct {
+		//! Forced order by standard
+		// Misordering leads to a scheme validation error of
+		// content model: '(EndpointReference,Types?,Scopes?,XAddrs?,MetadataVersion,)'
 		XMLName              xml.Name `xml:"wsd:Hello"`
-		WsdTypes             string   `xml:"wsd:Types"`
-		WsdScopes            string   `xml:"wsd:Scopes"`
 		WsaEndpointReference SendWsaEndpointReference
+		WsdTypes             string `xml:"wsd:Types"`
+		WsdScopes            string `xml:"wsd:Scopes"`
 		WsdXAddrs            string `xml:"wsd:XAddrs"`
 		WsdMetadataVersion   string `xml:"wsd:MetadataVersion"`
 	}
@@ -56,7 +59,7 @@ func NewHelloSOAPBody(ipAddr *net.TCPAddr) SendSOAPBody {
 	// this data is taken from the sdcX implementation
 	// TODO: allow customization
 	helloPayload.WsdTypes = "dpws:Device mdpws:MedicalDevice"
-	helloPayload.WsdScopes = "sdc.mds.pkp:1.2.840.10004.20701.1.1 sdc.ctxt.loc:/sdc.ctxt.loc.detail/DWHL%2F%2F%2FF05%2F%2FTKl?fac=DWHL&amp;poc=F05&amp;bed=TKl sdc.ctxt.pat:/http%3A%2F%2Fwww%2Esomda%2Eorg%2Fids/SamplePatientId123 sdc.ctxt.wfl:/http%3A%2F%2Fwww%2Esomda%2Eorg%2Fids/WORKFLOW sdc.ctxt.ens:/http%3A%2F%2Fwww%2Esomda%2Eorg%2Fids/ENSEMBLE sdc.ctxt.opr:/http%3A%2F%2Fwww%2Esomda%2Eorg%2Fids/OPERATOR sdc.ctxt.mns:/http%3A%2F%2Fwww%2Esomda%2Eorg%2Fids/MEANS sdc.cdc.type:///130535 sdc.cdc.type:///130536 sdc.cdc.type:///130736 sdc.cdc.type:/urn:oid:1.3.6.1.4.1.3592.2.1.1.0//DN_VMD"
+	helloPayload.WsdScopes = "sdc.mds.pkp:1.2.840.10004.20701.1.1 sdc.ctxt.loc:/sdc.ctxt.loc.detail/DWHL///F05//TKl?fac=DWHL&amp;poc=F05&amp;bed=TKl sdc.ctxt.pat:/http://www.somda.org/ids/SamplePatientId123 sdc.ctxt.wfl:/http://www.somda.org/ids/WORKFLOW sdc.ctxt.ens:/http://www.somda.org/ids/ENSEMBLE sdc.ctxt.opr:/http://www.somda.org/ids/OPERATOR sdc.ctxt.mns:/http://www.somda.org/ids/MEANS sdc.cdc.type:///130535 sdc.cdc.type:///130536 sdc.cdc.type:///130736 sdc.cdc.type:/urn:oid:1.3.6.1.4.1.3592.2.1.1.0//DN_VMD"
 
 	helloPayload.WsdMetadataVersion = "1"
 
@@ -65,21 +68,4 @@ func NewHelloSOAPBody(ipAddr *net.TCPAddr) SendSOAPBody {
 	helloPayload.WsdXAddrs = fmt.Sprintf("http://%s:%d/%s", &ipAddr.IP, ipAddr.Port, epRef)
 
 	return SendSOAPBody{Payload: helloPayload}
-}
-
-//
-//	Get
-//
-
-func NewGetSOAPHeader(wsaTo string) SendSOAPHeader {
-	return SendSOAPHeader{
-		WsaAction:    "http://schemas.xmlsoap.org/ws/2004/09/transfer/Get",
-		WsaTo:        wsaTo,
-		WsaMessageId: uuid.NewString(),
-	}
-}
-
-func NewGetSOAPBody() SendSOAPBody {
-	// A Get message has an empty body.
-	return SendSOAPBody{}
 }

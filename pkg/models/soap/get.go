@@ -1,6 +1,27 @@
 package models
 
-import "encoding/xml"
+import (
+	"encoding/xml"
+
+	"github.com/google/uuid"
+)
+
+//
+//	Get
+//
+
+func NewGetSOAPHeader(wsaTo string) SendSOAPHeader {
+	return SendSOAPHeader{
+		WsaAction:    "http://schemas.xmlsoap.org/ws/2004/09/transfer/Get",
+		WsaTo:        wsaTo,
+		WsaMessageId: uuid.NewString(),
+	}
+}
+
+func NewGetSOAPBody() SendSOAPBody {
+	// A Get message has an empty body.
+	return SendSOAPBody{}
+}
 
 //
 //	Get Response
