@@ -153,6 +153,8 @@ func DiscoverSDCConsumer(interfaceName string, wg *sync.WaitGroup, caCrt, server
 	// Step 2: Receive Get message and anwser via HTTP SOAP API
 	//
 
+	//! Caution: Will never terminate!!
+	//	TODO: Implement break condition: timeout? fixed time?
 	for {
 		// Accept incoming connections
 		conn, err := tcpList.Accept()

@@ -2,6 +2,26 @@
 
 This is the changelog of MobileSniper.
 
+## MobileSniper v0.3 - WIP
+
+### New Features
+
+- Command **`enum sdc consumer`:** Enumerates the connected network by sending a UDP multicast to discovery SDC *consumers*. A consumer will receive the hello message send by MobileSniper and should anwser this message (in theory). If the provider enforce TLS, there is no method implemented to bypass these restriction. (*Work in Progress*)
+
+### Improvements
+
+- SOAP message handling uses generics for easier and more consitent parsing of received messages.
+
+### Refactoring
+
+- Command **`enum sdc`** was renamed to **`enum sdc provider`**.
+- SOAP models recived consitent naming for receiving and sending models
+
+### Miscellaneous
+
+- Updated README to link to the correct repositories
+- VSCode launch options for SDC commands
+
 ## MobileSniper v0.2
 
 ### New Features
